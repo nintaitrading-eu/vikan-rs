@@ -240,6 +240,7 @@ fn update(model: &mut Model, msg: Message) -> Option<Message>
             {
                 return None;
             }
+
             model.col = model.col.saturating_sub(1);
             if model.items[model.col].is_empty()
             {
@@ -322,6 +323,11 @@ fn update(model: &mut Model, msg: Message) -> Option<Message>
 
         Message::MoveUp =>
         {
+            if model.items[model.col].is_empty()
+            {
+                return None;
+            }
+
             if model.row == 0
             {
                 return None;
@@ -333,6 +339,11 @@ fn update(model: &mut Model, msg: Message) -> Option<Message>
         }
         Message::MoveDown =>
         {
+            if model.items[model.col].is_empty()
+            {
+                return None;
+            }
+
             if model.row >= model.items[model.col].len() - 1
             {
                 return None;
