@@ -1,8 +1,13 @@
 mod ui;
+mod errors;
 
 use std::{io, iter::zip, time::Duration, iter::Iterator};
+use std::fs;
+use std::fs::File;
+use std::io::Write;
 
 use ui::tui;
+use errors::error;
 use ratatui::{
     crossterm::event::{self, Event, KeyCode},
     layout::{Alignment, Constraint, Flex, Layout, Rect},
@@ -11,13 +16,18 @@ use ratatui::{
     Frame,
 };
 
+//use serde::{Serialize, Deserialize};
+//use serde_json::{Result, Error};
 
+
+//#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 #[derive(Debug, Default, Clone)]
 struct TodoItem
 {
     title: String,
 }
 
+//#[derive(Serialize, Deserialize, Debug, Default)]
 #[derive(Debug, Default)]
 struct Model
 {
@@ -30,6 +40,7 @@ struct Model
     input: String,
 }
 
+//#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq)]
 #[derive(Debug, Default, PartialEq, Eq)]
 enum RunningState
 {
@@ -63,8 +74,13 @@ enum Message
 const COLUMNS: [&str; 3] = ["TODO", "IN PROGRESS", "DONE"];
 const MAX_COLUMNS: usize = COLUMNS.len();
 
-fn main() -> Result<(), io::Error>
+fn main() -> Result<(), error::DataError>
 {
+    //let json_data = fs::read_to_string("data.json").ok()?;
+    //let m: Model = serde_json::from_str(&json_data).ok()?;
+    //println!("model.row: {}", m.row);
+    //println!("model.col: {}", m.col);
+
     tui::install_panic_hook();
     let mut terminal = tui::init_terminal()?;
     let mut model = Model
@@ -389,6 +405,9 @@ fn update(model: &mut Model, msg: Message) -> Option<Message>
         Message::Quit =>
         {
             model.running_state = RunningState::Done;
+            //let json_data = serde_json::to_string_pretty(&model).unwrap();
+            //let mut file = File::create("data.json").ok()?;
+            //file.write_all(json_data.as_bytes()).ok()?;
             None
         }
     }
