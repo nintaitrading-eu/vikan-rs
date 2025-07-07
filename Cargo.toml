@@ -1,0 +1,16 @@
+[[bin]]
+name = "vikan"
+path = "src/main.rs"
+
+[package]
+description = "Command line kanban TUI with vi-keybindings."
+edition = "2024"
+license = "MIT"
+name = "kanbantui"
+version = "0.1.0"
+
+[dependencies.crossterm]
+version = "0.28.1"
+
+[dependencies.ratatui]
+version = "0.29.0"
