@@ -60,7 +60,7 @@ enum Message
     Quit,
 }
 
-const COLUMNS: [&str; 3] = ["TODO", "IN_PROGRESS", "DONE"];
+const COLUMNS: [&str; 3] = ["TODO", "IN PROGRESS", "DONE"];
 const MAX_COLUMNS: usize = COLUMNS.len();
 
 fn main() -> Result<(), io::Error>
@@ -113,7 +113,7 @@ fn view(model: &mut Model, frame: &mut Frame)
 
         frame.render_widget(list_component, area);
 
-        let item_height = 3;
+        let item_height = 1;
 
         let item_slots: usize = (inner_area.height / item_height).into();
 
