@@ -1,6 +1,6 @@
 mod ui;
 
-use std::{io, iter::zip, time::Duration};
+use std::{io, iter::zip, time::Duration, iter::Iterator};
 
 use ui::tui;
 use ratatui::{
@@ -281,6 +281,11 @@ fn update(model: &mut Model, msg: Message) -> Option<Message>
         }
         Message::MoveLeft =>
         {
+            if model.items[model.col].is_empty()
+            {
+                return None;
+            }
+
             if model.col == 0
             {
                 return None;
@@ -296,6 +301,11 @@ fn update(model: &mut Model, msg: Message) -> Option<Message>
         }
         Message::MoveRight =>
         {
+            if model.items[model.col].is_empty()
+            {
+                return None;
+            }
+
             if model.col == MAX_COLUMNS - 1
             {
                 return None;
