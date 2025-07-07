@@ -6,7 +6,7 @@ path = "src/main.rs"
 description = "Command line kanban TUI with vi-keybindings."
 edition = "2024"
 license = "MIT"
-name = "kanbantui"
+name = "vikan"
 version = "0.1.0"
 
 [dependencies.crossterm]
