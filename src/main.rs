@@ -17,18 +17,16 @@ use ratatui::{
 };
 
 //use serde::{Serialize, Deserialize};
-//use serde_json::{Result, Error};
+//use serde_json::Result;
 
 
-//#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-#[derive(Debug, Default, Clone)]
+#[derive(/*Serialize, Deserialize, */Debug, Default, Clone)]
 struct TodoItem
 {
     title: String,
 }
 
-//#[derive(Serialize, Deserialize, Debug, Default)]
-#[derive(Debug, Default)]
+#[derive(/*Serialize, Deserialize, */Debug, Default)]
 struct Model
 {
     col: usize,
@@ -40,8 +38,7 @@ struct Model
     input: String,
 }
 
-//#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq)]
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(/*Serialize, Deserialize, */Debug, Default, PartialEq, Eq)]
 enum RunningState
 {
     #[default]
@@ -74,28 +71,40 @@ enum Message
 const COLUMNS: [&str; 3] = ["TODO", "IN PROGRESS", "DONE"];
 const MAX_COLUMNS: usize = COLUMNS.len();
 
-fn main() -> Result<(), error::DataError>
+fn main()
 {
     //let json_data = fs::read_to_string("data.json").ok()?;
     //let m: Model = serde_json::from_str(&json_data).ok()?;
     //println!("model.row: {}", m.row);
     //println!("model.col: {}", m.col);
 
-    tui::install_panic_hook();
-    let mut terminal = tui::init_terminal()?;
     let mut model = Model
     {
         items: vec![vec![], vec![], vec![]],
         ..Default::default()
     };
+    match render(model).map_err(error::ApplicationError::from)
+    {
+        Ok(_) => (),
+        Err(ex) =>
+        {
+            println!("Error: {}", ex);
+            std::process::exit(1);
+        }
+    };
+}
 
+fn render(mut model: Model) -> Result<(), error::ApplicationError>
+{
+    tui::install_panic_hook();
+    let mut terminal = tui::init_terminal().map_err(error::ApplicationError::from)?;
     while model.running_state != RunningState::Done
     {
         // Render the current view
-        terminal.draw(|f| view(&mut model, f))?;
+        terminal.draw(|f| view(&mut model, f)).map_err(error::ApplicationError::from)?;
 
         // Handle events and map to a Message
-        let mut current_msg = handle_event(&model)?;
+        let mut current_msg = handle_event(&model).map_err(error::ApplicationError::from)?;
 
         // Process updates as long as they return a non-None message
         while current_msg.is_some()
@@ -104,7 +113,7 @@ fn main() -> Result<(), error::DataError>
         }
     }
 
-    tui::restore_terminal()?;
+    tui::restore_terminal().map_err(error::ApplicationError::from)?;
     Ok(())
 }
 
@@ -170,9 +179,9 @@ fn popup_area(area: Rect, percent_x: u16) -> Rect
     area
 }
 
-fn handle_event(model: &Model) -> Result<Option<Message>, io::Error>
+fn handle_event(model: &Model) -> Result<Option<Message>, error::ApplicationError>
 {
-    if event::poll(Duration::from_millis(250))?
+    if event::poll(Duration::from_millis(250)).map_err(error::ApplicationError::from)?
     {
         if let Event::Key(key) = event::read()?
         {
