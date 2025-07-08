@@ -97,14 +97,14 @@ fn main()
 fn render(mut model: Model) -> Result<(), error::ApplicationError>
 {
     tui::install_panic_hook();
-    let mut terminal = tui::init_terminal().map_err(error::ApplicationError::from)?;
+    let mut terminal = tui::init_terminal().map_err(error::ApplicationError::IoError)?;
     while model.running_state != RunningState::Done
     {
         // Render the current view
-        terminal.draw(|f| view(&mut model, f)).map_err(error::ApplicationError::from)?;
+        terminal.draw(|f| view(&mut model, f)).map_err(error::ApplicationError::IoError)?;
 
         // Handle events and map to a Message
-        let mut current_msg = handle_event(&model).map_err(error::ApplicationError::from)?;
+        let mut current_msg = handle_event(&model)?;
 
         // Process updates as long as they return a non-None message
         while current_msg.is_some()
@@ -113,7 +113,7 @@ fn render(mut model: Model) -> Result<(), error::ApplicationError>
         }
     }
 
-    tui::restore_terminal().map_err(error::ApplicationError::from)?;
+    tui::restore_terminal().map_err(error::ApplicationError::IoError)?;
     Ok(())
 }
 
@@ -181,9 +181,9 @@ fn popup_area(area: Rect, percent_x: u16) -> Rect
 
 fn handle_event(model: &Model) -> Result<Option<Message>, error::ApplicationError>
 {
-    if event::poll(Duration::from_millis(250)).map_err(error::ApplicationError::from)?
+    if event::poll(Duration::from_millis(250)).map_err(error::ApplicationError::IoError)?
     {
-        if let Event::Key(key) = event::read()?
+        if let Event::Key(key) = event::read().map_err(error::ApplicationError::IoError)?
         {
             if key.kind == event::KeyEventKind::Press
             {

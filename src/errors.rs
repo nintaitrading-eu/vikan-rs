@@ -11,7 +11,10 @@ pub mod error
         #[error("Error serializing json.")]
         JsonSerializeError(#[from] serde_json::Error),
        */ 
+        #[error("IO error.")]
+        IoError(#[from] std::io::Error),
+
         #[error("Unexpected error.")]
-        UnexpectedError(#[from] std::io::Error),
+        UnexpectedError,
     }
 }
