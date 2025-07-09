@@ -16,9 +16,8 @@ use ratatui::{
     Frame,
 };
 
-//use serde::{Serialize, Deserialize};
-//use serde_json::Result;
-
+use serde::{Serialize, Deserialize};
+use serde_json::Result;
 
 #[derive(/*Serialize, Deserialize, */Debug, Default, Clone)]
 struct TodoItem
@@ -83,7 +82,7 @@ fn main()
         items: vec![vec![], vec![], vec![]],
         ..Default::default()
     };
-    match render(model).map_err(error::ApplicationError::from)
+    match render(model)
     {
         Ok(_) => (),
         Err(ex) =>
@@ -94,7 +93,7 @@ fn main()
     };
 }
 
-fn render(mut model: Model) -> Result<(), error::ApplicationError>
+fn render(mut model: Model) -> Result<()>
 {
     tui::install_panic_hook();
     let mut terminal = tui::init_terminal().map_err(error::ApplicationError::IoError)?;
@@ -104,7 +103,7 @@ fn render(mut model: Model) -> Result<(), error::ApplicationError>
         terminal.draw(|f| view(&mut model, f)).map_err(error::ApplicationError::IoError)?;
 
         // Handle events and map to a Message
-        let mut current_msg = handle_event(&model)?;
+        let mut current_msg = handle_event(&model).map_err(error::ApplicationError::JsonError)?;
 
         // Process updates as long as they return a non-None message
         while current_msg.is_some()
@@ -179,7 +178,7 @@ fn popup_area(area: Rect, percent_x: u16) -> Rect
     area
 }
 
-fn handle_event(model: &Model) -> Result<Option<Message>, error::ApplicationError>
+fn handle_event(model: &Model) -> Result<Option<Message>>
 {
     if event::poll(Duration::from_millis(250)).map_err(error::ApplicationError::IoError)?
     {

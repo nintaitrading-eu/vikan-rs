@@ -1,20 +1,59 @@
 pub mod error
 {
     use thiserror::Error;
+    use std::error::Error;
 
     #[derive(Error, Debug)]
     pub enum ApplicationError
     {
-        /*#[error("Error deserializing json.")]
-        JsonDeserializeError(#[from] serde_json::Error),
-        
-        #[error("Error serializing json.")]
-        JsonSerializeError(#[from] serde_json::Error),
-       */ 
+        #[error("Error (de)serializing json.")]
+        JsonError(serde_json::Error),
+        //JsonError(#[from] serde_json::Error),
+
+        #[error("Error (de)serializing json.")]
+        SerdeError(serde_json::Error),
+
         #[error("IO error.")]
         IoError(#[from] std::io::Error),
 
         #[error("Unexpected error.")]
         UnexpectedError,
+    }
+
+    // Implement From for converting serde_json::Error to ApplicationError
+    impl From<serde_json::Error> for ApplicationError
+    {
+        fn from(err: serde_json::Error) -> ApplicationError
+        {
+            ApplicationError::SerdeError(err)
+        }
+    }
+
+    /*impl From<serde_json::Error> for ApplicationError
+    {
+        fn from(err: serde_json::Error) -> ApplicationError
+        {
+            ApplicationError::JsonError(err)
+            /*use serde_json::error::Category;
+            match err.classify()
+            {
+                Category::Io =>
+                {
+                    ApplicationError::IoError(err.into())
+                }
+                Category::Syntax | Category::Data | Category::Eof =>
+                {
+                    ApplicationError::JsonError(err)
+                }
+            }*/
+        }
+    }*/
+
+    impl From<ApplicationError> for serde_json::Error
+    {
+        fn from(err: ApplicationError) -> serde_json::Error
+        {
+           serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, "Unexpected error")) 
+        }
     }
 }
