@@ -19,13 +19,13 @@ use ratatui::{
 use serde::{Serialize, Deserialize};
 use serde_json::Result;
 
-#[derive(/*Serialize, Deserialize, */Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 struct TodoItem
 {
     title: String,
 }
 
-#[derive(/*Serialize, Deserialize, */Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 struct Model
 {
     col: usize,
@@ -37,7 +37,7 @@ struct Model
     input: String,
 }
 
-#[derive(/*Serialize, Deserialize, */Debug, Default, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq)]
 enum RunningState
 {
     #[default]
@@ -72,16 +72,24 @@ const MAX_COLUMNS: usize = COLUMNS.len();
 
 fn main()
 {
-    //let json_data = fs::read_to_string("data.json").ok()?;
-    //let m: Model = serde_json::from_str(&json_data).ok()?;
-    //println!("model.row: {}", m.row);
-    //println!("model.col: {}", m.col);
-
     let mut model = Model
     {
         items: vec![vec![], vec![], vec![]],
         ..Default::default()
     };
+
+    match load_data()
+    {
+        Ok(_) => (),
+        Err(ex) =>
+        {
+            println!("Error: {}", ex);
+            std::process::exit(1);
+        }
+    };
+
+    // TODO: map loaded data to the model
+
     match render(model)
     {
         Ok(_) => (),
@@ -91,6 +99,14 @@ fn main()
             std::process::exit(1);
         }
     };
+}
+
+fn load_data() -> Result<()>
+{
+    let json_data = fs::read_to_string("data.json").map_err(error::ApplicationError::IoError)?;
+    let m: Model = serde_json::from_str(&json_data).map_err(error::ApplicationError::JsonError)?;
+    println!("{:?}", m);
+    Ok(())
 }
 
 fn render(mut model: Model) -> Result<()>
@@ -111,6 +127,10 @@ fn render(mut model: Model) -> Result<()>
             current_msg = update(&mut model, current_msg.unwrap());
         }
     }
+
+    let json_data = serde_json::to_string_pretty(&model).unwrap();
+    let mut file = File::create("data.json").map_err(error::ApplicationError::IoError)?;
+    file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
 
     tui::restore_terminal().map_err(error::ApplicationError::IoError)?;
     Ok(())
@@ -413,9 +433,6 @@ fn update(model: &mut Model, msg: Message) -> Option<Message>
         Message::Quit =>
         {
             model.running_state = RunningState::Done;
-            //let json_data = serde_json::to_string_pretty(&model).unwrap();
-            //let mut file = File::create("data.json").ok()?;
-            //file.write_all(json_data.as_bytes()).ok()?;
             None
         }
     }
