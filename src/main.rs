@@ -20,7 +20,7 @@ use ui::tui;
 
 use ratatui::{
     layout::{Alignment, Constraint, Flex, Layout, Rect},
-    style::Stylize,
+    style::{Stylize, Color},
     widgets::{Block, Clear, Paragraph},
     Frame,
 };
@@ -47,8 +47,7 @@ fn main()
     };
 
     println!("{:?}", model);
-    std::process::exit(0); // debug
-
+    model.running_state = enum_::RunningState::Running;
     match render(model)
     {
         Ok(_) => (),
@@ -93,9 +92,9 @@ fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
         }
     }
 
-    let json_data = serde_json::to_string_pretty(&model).unwrap();
-    let mut file = File::create("data.json").map_err(error::ApplicationError::IoError)?;
-    file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
+    //let json_data = serde_json::to_string_pretty(&model).unwrap();
+    //let mut file = File::create(const_::JSON).map_err(error::ApplicationError::IoError)?;
+    //file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
 
     tui::restore_terminal().map_err(error::ApplicationError::IoError)?;
     Ok(())
@@ -116,6 +115,10 @@ fn view(model: &mut model::Model, frame: &mut Frame)
         let inner_area = list_component.inner(area);
 
         if model.col == idx
+        {
+            list_component = list_component.fg(Color::Indexed(const_::ORANGE));
+        }
+        else
         {
             list_component = list_component.green();
         }
