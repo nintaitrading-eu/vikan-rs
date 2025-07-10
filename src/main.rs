@@ -25,7 +25,7 @@ use ratatui::{
     Frame,
 };
 
-use serde_json::Result;
+use serde_json::Result as SerdeResult;
 
 fn main()
 {
@@ -35,9 +35,10 @@ fn main()
         ..Default::default()
     };
 
-    match load_data()
+    model = match load_data()
     {
-        Ok(_) => (),
+        Ok(Some(m)) => m,
+        Ok(None) => model,
         Err(ex) =>
         {
             println!("Error: {}", ex);
@@ -45,7 +46,8 @@ fn main()
         }
     };
 
-    // TODO: map loaded data to the model
+    println!("{:?}", model);
+    std::process::exit(0); // debug
 
     match render(model)
     {
@@ -58,22 +60,21 @@ fn main()
     };
 }
 
-fn load_data() -> Result<()>
+fn load_data() -> Result<Option<model::Model>, error::ApplicationError>
 {
     let jsonfile = Path::new(const_::JSON);
     if !jsonfile.exists()
     {
-        return Ok(())
+        return Ok(None);
     }
 
     // TODO: XDG basedir to put the data there
     let json_data = fs::read_to_string(const_::JSON).map_err(error::ApplicationError::IoError)?;
     let m: model::Model = serde_json::from_str(&json_data).map_err(error::ApplicationError::JsonError)?;
-    println!("{:?}", m);
-    Ok(())
+    Ok(Some(m))
 }
 
-fn render(mut model: model::Model) -> Result<()>
+fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
 {
     tui::install_panic_hook();
     let mut terminal = tui::init_terminal().map_err(error::ApplicationError::IoError)?;
