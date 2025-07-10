@@ -46,7 +46,6 @@ fn main()
         }
     };
 
-    println!("{:?}", model);
     model.running_state = enum_::RunningState::Running;
     match render(model)
     {
@@ -116,7 +115,8 @@ fn view(model: &mut model::Model, frame: &mut Frame)
 
         if model.col == idx
         {
-            list_component = list_component.fg(Color::Indexed(const_::ORANGE));
+            //list_component = list_component.fg(Color::Indexed(const_::ORANGE));
+            list_component = list_component.light_green();
         }
         else
         {
@@ -132,10 +132,18 @@ fn view(model: &mut model::Model, frame: &mut Frame)
         let item_areas =
             Layout::vertical(vec![Constraint::Length(item_height); item_slots]).split(inner_area);
 
-        for (_itemidx, (item, item_area)) in
+        for (itemidx, (item, item_area)) in
             zip(model.items[idx].clone(), item_areas.iter()).enumerate()
         {
-            let item_component = Paragraph::new(format!("{}. {}", model.row, item.title)).yellow();
+            let selectedidx = model.col;
+            let item_component = if selectedidx == idx
+            {
+                Paragraph::new(format!("{}. {}", model.row, item.title)).light_yellow()
+            }
+            else
+            {
+                Paragraph::new(format!("{}. {}", model.row, item.title)).yellow()
+            };
 
             frame.render_widget(item_component, *item_area);
         }
