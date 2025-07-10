@@ -1,15 +1,23 @@
+mod consts;
+mod enums;
+mod error_handler;
+mod event_handler;
+mod models;
 mod ui;
-mod errors;
 
-use std::{io, iter::zip, time::Duration, iter::Iterator};
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Write};
+use std::iter::zip;
 
+use consts::const_;
+use enums::enum_;
+use error_handler::error;
+use event_handler::event;
+use models::model;
 use ui::tui;
-use errors::error;
+
 use ratatui::{
-    crossterm::event::{self, Event, KeyCode},
     layout::{Alignment, Constraint, Flex, Layout, Rect},
     style::Stylize,
     widgets::{Block, Clear, Paragraph},
@@ -19,60 +27,9 @@ use ratatui::{
 use serde::{Serialize, Deserialize};
 use serde_json::Result;
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-struct TodoItem
-{
-    title: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Default)]
-struct Model
-{
-    col: usize,
-    row: usize,
-    items: Vec<Vec<TodoItem>>,
-    running_state: RunningState,
-    show_popup: bool,
-    inputting: bool,
-    input: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq)]
-enum RunningState
-{
-    #[default]
-    Running,
-    Done,
-}
-
-#[derive(PartialEq, Debug)]
-enum Message
-{
-    Left,
-    Right,
-    Up,
-    Down,
-
-    MoveLeft,
-    MoveRight,
-    MoveUp,
-    MoveDown,
-
-    Add,
-    Input(char),
-    Backspace,
-    Submit,
-    Cancel,
-
-    Quit,
-}
-
-const COLUMNS: [&str; 3] = ["TODO", "IN PROGRESS", "DONE"];
-const MAX_COLUMNS: usize = COLUMNS.len();
-
 fn main()
 {
-    let mut model = Model
+    let mut model = model::Model
     {
         items: vec![vec![], vec![], vec![]],
         ..Default::default()
@@ -104,27 +61,27 @@ fn main()
 fn load_data() -> Result<()>
 {
     let json_data = fs::read_to_string("data.json").map_err(error::ApplicationError::IoError)?;
-    let m: Model = serde_json::from_str(&json_data).map_err(error::ApplicationError::JsonError)?;
+    let m: model::Model = serde_json::from_str(&json_data).map_err(error::ApplicationError::JsonError)?;
     println!("{:?}", m);
     Ok(())
 }
 
-fn render(mut model: Model) -> Result<()>
+fn render(mut model: model::Model) -> Result<()>
 {
     tui::install_panic_hook();
     let mut terminal = tui::init_terminal().map_err(error::ApplicationError::IoError)?;
-    while model.running_state != RunningState::Done
+    while model.running_state != enum_::RunningState::Done
     {
         // Render the current view
         terminal.draw(|f| view(&mut model, f)).map_err(error::ApplicationError::IoError)?;
 
         // Handle events and map to a Message
-        let mut current_msg = handle_event(&model).map_err(error::ApplicationError::JsonError)?;
+        let mut current_msg = event::handle_event(&model)?;
 
         // Process updates as long as they return a non-None message
         while current_msg.is_some()
         {
-            current_msg = update(&mut model, current_msg.unwrap());
+            current_msg = event::update(&mut model, current_msg.unwrap());
         }
     }
 
@@ -136,13 +93,13 @@ fn render(mut model: Model) -> Result<()>
     Ok(())
 }
 
-fn view(model: &mut Model, frame: &mut Frame)
+fn view(model: &mut model::Model, frame: &mut Frame)
 {
     use Constraint::Fill;
-    let horizontal = Layout::horizontal([Fill(1); MAX_COLUMNS]);
-    let areas: [Rect; MAX_COLUMNS] = horizontal.areas(frame.area());
+    let horizontal = Layout::horizontal([Fill(1); const_::MAX_COLUMNS]);
+    let areas: [Rect; const_::MAX_COLUMNS] = horizontal.areas(frame.area());
 
-    for (idx, (area, column)) in zip(areas, COLUMNS).enumerate()
+    for (idx, (area, column)) in zip(areas, const_::COLUMNS).enumerate()
     {
         let mut list_component = Block::bordered()
             .title(column)
@@ -182,7 +139,7 @@ fn view(model: &mut Model, frame: &mut Frame)
     {
         let input = Paragraph::new(model.input.as_str())
             .centered()
-            .block(Block::bordered().title("Add Item"));
+            .block(Block::bordered().title(const_::RsAddItem));
         let area = popup_area(frame.area(), 60);
         frame.render_widget(Clear, area);
         frame.render_widget(input, area);
@@ -196,244 +153,4 @@ fn popup_area(area: Rect, percent_x: u16) -> Rect
     let [area] = vertical.areas(area);
     let [area] = horizontal.areas(area);
     area
-}
-
-fn handle_event(model: &Model) -> Result<Option<Message>>
-{
-    if event::poll(Duration::from_millis(250)).map_err(error::ApplicationError::IoError)?
-    {
-        if let Event::Key(key) = event::read().map_err(error::ApplicationError::IoError)?
-        {
-            if key.kind == event::KeyEventKind::Press
-            {
-                if model.inputting
-                {
-                    return Ok(handle_input_key(key));
-                }
-                else
-                {
-                    return Ok(handle_cmd_key(key));
-                }
-            }
-        }
-    }
-    Ok(None)
-}
-
-fn handle_input_key(key: event::KeyEvent) -> Option<Message>
-{
-    match key.code
-    {
-        KeyCode::Char(c) => Some(Message::Input(c)),
-        KeyCode::Backspace => Some(Message::Backspace),
-        KeyCode::Enter => Some(Message::Submit),
-        KeyCode::Esc => Some(Message::Cancel),
-        _ => None,
-    }
-}
-
-fn handle_cmd_key(key: event::KeyEvent) -> Option<Message>
-{
-    match key.code
-    {
-        KeyCode::Char('h') => Some(Message::Left),
-        KeyCode::Char('j') => Some(Message::Down),
-        KeyCode::Char('k') => Some(Message::Up),
-        KeyCode::Char('l') => Some(Message::Right),
-
-        KeyCode::Char('H') => Some(Message::MoveLeft),
-        KeyCode::Char('J') => Some(Message::MoveDown),
-        KeyCode::Char('K') => Some(Message::MoveUp),
-        KeyCode::Char('L') => Some(Message::MoveRight),
-
-        KeyCode::Char('a') => Some(Message::Add),
-
-        KeyCode::Char('q') => Some(Message::Quit),
-
-        _ => None,
-    }
-}
-
-fn update(model: &mut Model, msg: Message) -> Option<Message>
-{
-    match msg
-    {
-        Message::Right =>
-        {
-            if model.col == MAX_COLUMNS - 1
-            {
-                return None;
-            }
-
-            model.col += 1;
-
-            if model.items[model.col].is_empty()
-            {
-                model.row = 0
-            }
-            else
-            {
-                model.row = model.row.min(model.items[model.col].len() - 1);
-            }
-
-            None
-        }
-        Message::Left =>
-        {
-            if model.col == 0
-            {
-                return None;
-            }
-
-            model.col = model.col.saturating_sub(1);
-            if model.items[model.col].is_empty()
-            {
-                model.row = 0
-            }
-            else
-            {
-                model.row = model.row.min(model.items[model.col].len() - 1);
-            }
-
-            None
-        }
-        Message::Up =>
-        {
-            if model.row == 0
-            {
-                return None;
-            }
-
-            model.row = model.row.saturating_sub(1);
-            None
-        }
-        Message::Down =>
-        {
-            if model.items[model.col].is_empty()
-            {
-                return None;
-            }
-
-            model.row = (model.row + 1).min(model.items[model.col].len() - 1);
-            None
-        }
-        Message::Add =>
-        {
-            model.show_popup = true;
-            model.inputting = true;
-
-            None
-        }
-        Message::MoveLeft =>
-        {
-            if model.items[model.col].is_empty()
-            {
-                return None;
-            }
-
-            if model.col == 0
-            {
-                return None;
-            }
-
-            let to_col = model.col - 1;
-
-            let to_col_len = model.items[to_col].len();
-
-            let item = model.items[model.col].remove(model.row);
-            model.items[to_col].insert(model.row.min(to_col_len), item);
-            Some(Message::Left)
-        }
-        Message::MoveRight =>
-        {
-            if model.items[model.col].is_empty()
-            {
-                return None;
-            }
-
-            if model.col == MAX_COLUMNS - 1
-            {
-                return None;
-            }
-
-            let to_col = model.col + 1;
-
-            let to_col_len = model.items[to_col].len();
-
-            let item = model.items[model.col].remove(model.row);
-            model.items[to_col].insert(model.row.min(to_col_len), item);
-            Some(Message::Right)
-        }
-
-        Message::MoveUp =>
-        {
-            if model.items[model.col].is_empty()
-            {
-                return None;
-            }
-
-            if model.row == 0
-            {
-                return None;
-            }
-
-            model.items[model.col].swap(model.row, model.row - 1);
-
-            Some(Message::Up)
-        }
-        Message::MoveDown =>
-        {
-            if model.items[model.col].is_empty()
-            {
-                return None;
-            }
-
-            if model.row >= model.items[model.col].len() - 1
-            {
-                return None;
-            }
-
-            model.items[model.col].swap(model.row, model.row + 1);
-
-            Some(Message::Down)
-        }
-        Message::Input(c) =>
-        {
-            model.input.push(c);
-            None
-        }
-        Message::Backspace =>
-        {
-            model.input.pop();
-            None
-        }
-        Message::Submit =>
-        {
-            model.show_popup = false;
-            model.inputting = false;
-
-            model.items[model.col].insert(
-                model.row,
-                TodoItem {
-                    title: model.input.clone(),
-                },
-            );
-
-            model.input.clear();
-
-            None
-        }
-        Message::Cancel =>
-        {
-            model.show_popup = false;
-            model.inputting = false;
-            model.input.clear();
-            None
-        }
-        Message::Quit =>
-        {
-            model.running_state = RunningState::Done;
-            None
-        }
-    }
 }
