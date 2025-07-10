@@ -50,9 +50,9 @@ pub mod error
 
     impl From<ApplicationError> for serde_json::Error
     {
-        fn from(err: ApplicationError) -> serde_json::Error
+        fn from(_err: ApplicationError) -> serde_json::Error
         {
-           serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, "Unexpected error")) 
+           serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, "Unexpected serde_json error.")) 
         }
     }
 }

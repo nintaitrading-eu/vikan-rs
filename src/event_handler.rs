@@ -6,12 +6,8 @@ pub mod event
     use crate::models::model;
     use ratatui::{
         crossterm::event::{self, Event, KeyCode},
-        layout::{Alignment, Constraint, Flex, Layout, Rect},
-        style::Stylize,
-        widgets::{Block, Clear, Paragraph},
-        Frame,
     };
-    use std::{io, iter::zip, time::Duration, iter::Iterator};
+    use std::{time::Duration};
 
     #[derive(PartialEq, Debug)]
     pub enum Message

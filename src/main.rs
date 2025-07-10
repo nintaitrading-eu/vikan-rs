@@ -9,6 +9,7 @@ use std::fs;
 use std::fs::File;
 use std::io::{Write};
 use std::iter::zip;
+use std::path::Path;
 
 use consts::const_;
 use enums::enum_;
@@ -24,7 +25,6 @@ use ratatui::{
     Frame,
 };
 
-use serde::{Serialize, Deserialize};
 use serde_json::Result;
 
 fn main()
@@ -60,7 +60,14 @@ fn main()
 
 fn load_data() -> Result<()>
 {
-    let json_data = fs::read_to_string("data.json").map_err(error::ApplicationError::IoError)?;
+    let jsonfile = Path::new(const_::JSON);
+    if !jsonfile.exists()
+    {
+        return Ok(())
+    }
+
+    // TODO: XDG basedir to put the data there
+    let json_data = fs::read_to_string(const_::JSON).map_err(error::ApplicationError::IoError)?;
     let m: model::Model = serde_json::from_str(&json_data).map_err(error::ApplicationError::JsonError)?;
     println!("{:?}", m);
     Ok(())
@@ -121,15 +128,10 @@ fn view(model: &mut model::Model, frame: &mut Frame)
         let item_areas =
             Layout::vertical(vec![Constraint::Length(item_height); item_slots]).split(inner_area);
 
-        for (item_idx, (item, item_area)) in
+        for (_itemidx, (item, item_area)) in
             zip(model.items[idx].clone(), item_areas.iter()).enumerate()
         {
-            /*let mut container = Block::bordered().title("").reset();
-            if model.col == idx && model.row == item_idx {
-                container = container.green();
-            }*/
-
-            let item_component = Paragraph::new(format!("{}. {}", item_idx, item.title));
+            let item_component = Paragraph::new(format!("{}. {}", model.row, item.title)).yellow();
 
             frame.render_widget(item_component, *item_area);
         }
@@ -139,7 +141,7 @@ fn view(model: &mut model::Model, frame: &mut Frame)
     {
         let input = Paragraph::new(model.input.as_str())
             .centered()
-            .block(Block::bordered().title(const_::RsAddItem));
+            .block(Block::bordered().title(const_::RS_ADDITEM));
         let area = popup_area(frame.area(), 60);
         frame.render_widget(Clear, area);
         frame.render_widget(input, area);
