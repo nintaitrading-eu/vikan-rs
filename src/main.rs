@@ -102,10 +102,12 @@ fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
     Ok(())
 }
 
-fn create_paragraph(item: model::TodoItem, color: u8) -> Paragraph<'static>
+fn create_paragraph(item: model::TodoItem, fgcolor: u8, bgcolor: u8) -> Paragraph<'static>
 {
     Paragraph::new(format!("{}", item.title))
-        .fg(Color::Indexed(color))
+        .block(Block::bordered())
+        //.bg(Color::Indexed(bgcolor)) // TODO: Cleanup, after I figure out what styling option I like best.
+        .fg(Color::Indexed(fgcolor))
         .alignment(Alignment::Center)
 }
 
@@ -134,7 +136,7 @@ fn view(model: &mut model::Model, frame: &mut Frame)
 
         frame.render_widget(list_component, area);
 
-        let item_height = 1;
+        let item_height = const_::ITEM_HEIGHT;
 
         let item_slots: usize = (inner_area.height / item_height).into();
 
@@ -151,22 +153,22 @@ fn view(model: &mut model::Model, frame: &mut Frame)
             {
                 if selectedrow == itemidx
                 {
-                    create_paragraph(item, const_::LIGHT_WHITE)
+                    create_paragraph(item, const_::LIGHT_WHITE, const_::LIGHT_YELLOW).bold()
                 }
                 else
                 {
-                    create_paragraph(item, const_::LIGHT_YELLOW)
+                    create_paragraph(item, const_::LIGHT_YELLOW, const_::LIGHT_BLACK).bold()
                 }
             }
             else
             {
                 if selectedrow == itemidx
                 {
-                    create_paragraph(item, const_::WHITE)
+                    create_paragraph(item, const_::YELLOW, const_::BLACK)
                 }
                 else
                 {
-                    create_paragraph(item, const_::YELLOW)
+                    create_paragraph(item, const_::YELLOW, const_::BLACK)
                 }
             };
 
