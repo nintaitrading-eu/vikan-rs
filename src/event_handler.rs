@@ -23,6 +23,7 @@ pub mod event
         MoveDown,
 
         Add,
+        Delete,
         Input(char),
         Backspace,
         Submit,
@@ -80,6 +81,7 @@ pub mod event
             KeyCode::Char('L') => Some(Message::MoveRight),
 
             KeyCode::Char('a') => Some(Message::Add),
+            KeyCode::Char('d') => Some(Message::Delete),
 
             KeyCode::Char('q') => Some(Message::Quit),
 
@@ -154,6 +156,17 @@ pub mod event
             {
                 model.show_popup = true;
                 model.inputting = true;
+
+                None
+            }
+            Message::Delete =>
+            {
+                if model.items.is_empty()
+                {
+                    return None;
+                }
+
+                model.items[model.col].remove(model.row);
 
                 None
             }
