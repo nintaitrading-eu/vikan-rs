@@ -25,8 +25,6 @@ use ratatui::{
     Frame,
 };
 
-use serde_json::Result as SerdeResult;
-
 fn main()
 {
     let mut model = model::Model
@@ -72,6 +70,14 @@ fn load_data() -> Result<Option<model::Model>, error::ApplicationError>
     Ok(Some(m))
 }
 
+fn save_data(model: &mut model::Model) -> Result<(), error::ApplicationError>
+{
+    let json_data = serde_json::to_string_pretty(&model).unwrap();
+    let mut file = File::create(const_::JSON).map_err(error::ApplicationError::IoError)?;
+    file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
+    Ok(())
+}
+
 fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
 {
     tui::install_panic_hook();
@@ -89,11 +95,8 @@ fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
         {
             current_msg = event::update(&mut model, current_msg.unwrap());
         }
+        save_data(&mut model)?;
     }
-
-    //let json_data = serde_json::to_string_pretty(&model).unwrap();
-    //let mut file = File::create(const_::JSON).map_err(error::ApplicationError::IoError)?;
-    //file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
 
     tui::restore_terminal().map_err(error::ApplicationError::IoError)?;
     Ok(())
@@ -115,12 +118,11 @@ fn view(model: &mut model::Model, frame: &mut Frame)
 
         if model.col == idx
         {
-            //list_component = list_component.fg(Color::Indexed(const_::ORANGE));
-            list_component = list_component.light_green();
+            list_component = list_component.fg(Color::Indexed(const_::LIGHT_GREEN))
         }
         else
         {
-            list_component = list_component.green();
+            list_component = list_component.fg(Color::Indexed(const_::GREEN));
         }
 
         frame.render_widget(list_component, area);
@@ -135,14 +137,30 @@ fn view(model: &mut model::Model, frame: &mut Frame)
         for (itemidx, (item, item_area)) in
             zip(model.items[idx].clone(), item_areas.iter()).enumerate()
         {
-            let selectedidx = model.col;
-            let item_component = if selectedidx == idx
+            let selectedcol = model.col;
+            let selectedrow = model.row;
+
+            let item_component = if selectedcol == idx
             {
-                Paragraph::new(format!("{}. {}", model.row, item.title)).light_yellow()
+                if selectedrow == itemidx
+                {
+                    Paragraph::new(format!("{}", item.title)).fg(Color::Indexed(const_::LIGHT_WHITE))
+                }
+                else
+                {
+                    Paragraph::new(format!("{}", item.title)).fg(Color::Indexed(const_::LIGHT_YELLOW))
+                }
             }
             else
             {
-                Paragraph::new(format!("{}. {}", model.row, item.title)).yellow()
+                if selectedrow == itemidx
+                {
+                    Paragraph::new(format!("{}", item.title)).fg(Color::Indexed(const_::WHITE))
+                }
+                else
+                {
+                    Paragraph::new(format!("{}", item.title)).fg(Color::Indexed(const_::YELLOW))
+                }
             };
 
             frame.render_widget(item_component, *item_area);
