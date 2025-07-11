@@ -127,7 +127,7 @@ fn view(model: &mut model::Model, frame: &mut Frame)
 
         if model.col == idx
         {
-            list_component = list_component.fg(Color::Indexed(const_::LIGHT_GREEN))
+            list_component = list_component.fg(Color::Indexed(const_::LIGHT_GREEN)).bold()
         }
         else
         {
