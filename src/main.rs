@@ -102,6 +102,13 @@ fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
     Ok(())
 }
 
+fn create_paragraph(item: model::TodoItem, color: u8) -> Paragraph<'static>
+{
+    Paragraph::new(format!("{}", item.title))
+        .fg(Color::Indexed(color))
+        .alignment(Alignment::Center)
+}
+
 fn view(model: &mut model::Model, frame: &mut Frame)
 {
     use Constraint::Fill;
@@ -144,22 +151,22 @@ fn view(model: &mut model::Model, frame: &mut Frame)
             {
                 if selectedrow == itemidx
                 {
-                    Paragraph::new(format!("{}", item.title)).fg(Color::Indexed(const_::LIGHT_WHITE))
+                    create_paragraph(item, const_::LIGHT_WHITE)
                 }
                 else
                 {
-                    Paragraph::new(format!("{}", item.title)).fg(Color::Indexed(const_::LIGHT_YELLOW))
+                    create_paragraph(item, const_::LIGHT_YELLOW)
                 }
             }
             else
             {
                 if selectedrow == itemidx
                 {
-                    Paragraph::new(format!("{}", item.title)).fg(Color::Indexed(const_::WHITE))
+                    create_paragraph(item, const_::WHITE)
                 }
                 else
                 {
-                    Paragraph::new(format!("{}", item.title)).fg(Color::Indexed(const_::YELLOW))
+                    create_paragraph(item, const_::YELLOW)
                 }
             };
 
