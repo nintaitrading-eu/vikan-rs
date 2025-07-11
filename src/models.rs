@@ -17,7 +17,8 @@ pub mod model
         pub items: Vec<Vec<TodoItem>>,
         pub running_state: enum_::RunningState,
         pub show_popup: bool,
-        pub inputting: bool,
+        pub is_inputting: bool,
         pub input: String,
+        pub is_updating: bool,
     }
 }

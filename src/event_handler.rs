@@ -23,6 +23,7 @@ pub mod event
         MoveDown,
 
         Add,
+        Edit,
         Delete,
         Input(char),
         Backspace,
@@ -40,7 +41,7 @@ pub mod event
             {
                 if key.kind == event::KeyEventKind::Press
                 {
-                    if model.inputting
+                    if model.is_inputting
                     {
                         return Ok(handle_input_key(key));
                     }
@@ -81,6 +82,7 @@ pub mod event
             KeyCode::Char('L') => Some(Message::MoveRight),
 
             KeyCode::Char('a') => Some(Message::Add),
+            KeyCode::Char('e') => Some(Message::Edit),
             KeyCode::Char('d') => Some(Message::Delete),
 
             KeyCode::Char('q') => Some(Message::Quit),
@@ -155,7 +157,16 @@ pub mod event
             Message::Add =>
             {
                 model.show_popup = true;
-                model.inputting = true;
+                model.is_inputting = true;
+
+                None
+            }
+            Message::Edit =>
+            {
+                model.show_popup = true;
+                model.is_inputting = true;
+                model.input = model.items[model.col][model.row].title.clone();
+                model.is_updating = true;
 
                 None
             }
@@ -256,15 +267,23 @@ pub mod event
             Message::Submit =>
             {
                 model.show_popup = false;
-                model.inputting = false;
+                model.is_inputting = false;
 
-                model.items[model.col].insert(
-                    model.row,
-                    model::TodoItem {
-                        title: model.input.clone(),
-                    },
-                );
+                if model.is_updating
+                {
+                    model.items[model.col][model.row].title = model.input.clone()
+                }
+                else
+                {
+                    model.items[model.col].insert(
+                        model.row,
+                        model::TodoItem {
+                            title: model.input.clone(),
+                        },
+                    );
+                }
 
+                model.is_updating = false;
                 model.input.clear();
 
                 None
@@ -272,7 +291,7 @@ pub mod event
             Message::Cancel =>
             {
                 model.show_popup = false;
-                model.inputting = false;
+                model.is_inputting = false;
                 model.input.clear();
                 None
             }
