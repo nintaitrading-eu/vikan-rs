@@ -179,9 +179,15 @@ fn view(model: &mut model::Model, frame: &mut Frame)
 
     if model.show_popup
     {
+        let title = match model.is_updating
+        {
+            true => const_::RS_EDITITEM,
+            false => const_::RS_ADDITEM,
+        };
+
         let input = Paragraph::new(model.input.as_str())
             .centered()
-            .block(Block::bordered().title(const_::RS_ADDITEM));
+            .block(Block::bordered().title(title));
         let area = popup_area(frame.area(), 60);
         frame.render_widget(Clear, area);
         frame.render_widget(input, area);

@@ -158,6 +158,7 @@ pub mod event
             {
                 model.show_popup = true;
                 model.is_inputting = true;
+                model.is_updating = false;
 
                 None
             }

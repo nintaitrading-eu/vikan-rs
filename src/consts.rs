@@ -20,4 +20,5 @@ pub mod const_
 
     // Resource strings
     pub const RS_ADDITEM: &str = "Add Item";
+    pub const RS_EDITITEM: &str = "Edit Item";
 }
