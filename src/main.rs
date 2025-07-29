@@ -97,6 +97,7 @@ fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
         }
         save_data(&mut model)?;
     }
+    save_data(&mut model)?;
 
     tui::restore_terminal().map_err(error::ApplicationError::IoError)?;
     Ok(())

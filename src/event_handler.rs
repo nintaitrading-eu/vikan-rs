@@ -172,7 +172,7 @@ pub mod event
             }
             Message::Delete =>
             {
-                if model.items.is_empty()
+                if model.items[model.col].is_empty()
                 {
                     return None;
                 }
