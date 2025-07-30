@@ -275,18 +275,18 @@ pub mod event
                 model.show_popup = false;
                 model.is_inputting = false;
 
-                if model.popup_type == enum_::PopupType::None
-                {
-                    model.items[model.col][model.row].title = model.input.clone()
-                }
-                else
+                if model.popup_type == enum_::PopupType::Add
                 {
                     model.items[model.col].insert(
                         model.row,
                         model::TodoItem {
                             title: model.input.clone(),
                         },
-                    );
+                    )
+                }
+                else
+                {
+                    model.items[model.col][model.row].title = model.input.clone();
                 }
 
                 model.popup_type = enum_::PopupType::None;
