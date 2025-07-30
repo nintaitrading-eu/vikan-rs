@@ -162,6 +162,7 @@ pub mod event
             {
                 model.show_popup = true;
                 model.is_inputting = true;
+                model.input.clear();
                 model.popup_type = enum_::PopupType::Add;
 
                 None
