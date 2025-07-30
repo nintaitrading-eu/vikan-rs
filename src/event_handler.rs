@@ -29,6 +29,7 @@ pub mod event
         Backspace,
         Submit,
         Cancel,
+        Help,
 
         Quit,
     }
@@ -85,7 +86,10 @@ pub mod event
             KeyCode::Char('e') => Some(Message::Edit),
             KeyCode::Char('d') => Some(Message::Delete),
 
+            KeyCode::Char('?') => Some(Message::Help),
+
             KeyCode::Char('q') => Some(Message::Quit),
+            KeyCode::Esc => Some(Message::Cancel),
 
             _ => None,
         }
@@ -158,7 +162,7 @@ pub mod event
             {
                 model.show_popup = true;
                 model.is_inputting = true;
-                model.is_updating = false;
+                model.popup_type = enum_::PopupType::Add;
 
                 None
             }
@@ -167,7 +171,7 @@ pub mod event
                 model.show_popup = true;
                 model.is_inputting = true;
                 model.input = model.items[model.col][model.row].title.clone();
-                model.is_updating = true;
+                model.popup_type = enum_::PopupType::Edit;
 
                 None
             }
@@ -270,7 +274,7 @@ pub mod event
                 model.show_popup = false;
                 model.is_inputting = false;
 
-                if model.is_updating
+                if model.popup_type == enum_::PopupType::None
                 {
                     model.items[model.col][model.row].title = model.input.clone()
                 }
@@ -284,7 +288,7 @@ pub mod event
                     );
                 }
 
-                model.is_updating = false;
+                model.popup_type = enum_::PopupType::None;
                 model.input.clear();
 
                 None
@@ -296,9 +300,20 @@ pub mod event
                 model.input.clear();
                 None
             }
+            Message::Help =>
+            {
+                model.show_popup = true;
+                model.is_inputting = false;
+                model.popup_type = enum_::PopupType::Help;
+                model.input = String::from(const_::RS_HELP_COMMANDS);
+                None
+            }
             Message::Quit =>
             {
                 model.running_state = enum_::RunningState::Done;
+                model.show_popup = false;
+                model.is_inputting = false;
+                model.popup_type = enum_::PopupType::None;
                 None
             }
         }

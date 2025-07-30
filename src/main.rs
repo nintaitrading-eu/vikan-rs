@@ -179,24 +179,31 @@ fn view(model: &mut model::Model, frame: &mut Frame)
 
     if model.show_popup
     {
-        let title = match model.is_updating
+        let title = match model.popup_type
         {
-            true => const_::RS_EDITITEM,
-            false => const_::RS_ADDITEM,
+            enum_::PopupType::Edit => const_::RS_EDITITEM,
+            enum_::PopupType::Add => const_::RS_ADDITEM,
+            enum_::PopupType::Help => const_::RS_HELP,
+            _ => "",
+        };
+        let height = match model.popup_type
+        {
+            enum_::PopupType::Help => 20,
+            _ => 3,
         };
 
         let input = Paragraph::new(model.input.as_str())
             .centered()
             .block(Block::bordered().title(title));
-        let area = popup_area(frame.area(), 60);
+        let area = popup_area(frame.area(), height, 60);
         frame.render_widget(Clear, area);
         frame.render_widget(input, area);
     }
 }
 
-fn popup_area(area: Rect, percent_x: u16) -> Rect
+fn popup_area(area: Rect, height: u16, percent_x: u16) -> Rect
 {
-    let vertical = Layout::vertical([Constraint::Length(3)]).flex(Flex::Center);
+    let vertical = Layout::vertical([Constraint::Length(height)]).flex(Flex::Center);
     let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
     let [area] = vertical.areas(area);
     let [area] = horizontal.areas(area);

@@ -9,4 +9,14 @@ pub mod enum_
         Running,
         Done,
     }
+
+    #[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq)]
+    pub enum PopupType
+    {
+        #[default]
+        None,
+        Add,
+        Edit,
+        Help,
+    }
 }
