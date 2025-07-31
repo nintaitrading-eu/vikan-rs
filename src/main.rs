@@ -1,20 +1,20 @@
 mod consts;
 mod enums;
+mod config_handler;
 mod error_handler;
 mod event_handler;
+mod data_handler;
 mod models;
 mod ui;
 
 use std::fs;
-use std::fs::File;
-use std::io::{Write};
 use std::iter::zip;
-use std::path::Path;
 
 use consts::const_;
 use enums::enum_;
 use error_handler::error;
 use event_handler::event;
+use data_handler::data;
 use models::model;
 use ui::tui;
 
@@ -33,7 +33,7 @@ fn main()
         ..Default::default()
     };
 
-    model = match load_data()
+    model = match data::load_data(&mut model)
     {
         Ok(Some(m)) => m,
         Ok(None) => model,
@@ -56,28 +56,6 @@ fn main()
     };
 }
 
-fn load_data() -> Result<Option<model::Model>, error::ApplicationError>
-{
-    let jsonfile = Path::new(const_::JSON);
-    if !jsonfile.exists()
-    {
-        return Ok(None);
-    }
-
-    // TODO: XDG basedir to put the data there
-    let json_data = fs::read_to_string(const_::JSON).map_err(error::ApplicationError::IoError)?;
-    let m: model::Model = serde_json::from_str(&json_data).map_err(error::ApplicationError::JsonError)?;
-    Ok(Some(m))
-}
-
-fn save_data(model: &mut model::Model) -> Result<(), error::ApplicationError>
-{
-    let json_data = serde_json::to_string_pretty(&model).unwrap();
-    let mut file = File::create(const_::JSON).map_err(error::ApplicationError::IoError)?;
-    file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
-    Ok(())
-}
-
 fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
 {
     tui::install_panic_hook();
@@ -95,15 +73,15 @@ fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
         {
             current_msg = event::update(&mut model, current_msg.unwrap());
         }
-        save_data(&mut model)?;
+        data::save_data(&mut model)?;
     }
-    save_data(&mut model)?;
+    data::save_data(&mut model)?;
 
     tui::restore_terminal().map_err(error::ApplicationError::IoError)?;
     Ok(())
 }
 
-fn create_paragraph(item: model::TodoItem, fgcolor: u8, bgcolor: u8) -> Paragraph<'static>
+fn create_paragraph(item: model::TodoItem, fgcolor: u8, _bgcolor: u8) -> Paragraph<'static>
 {
     Paragraph::new(format!("{}", item.title))
         .block(Block::bordered())
