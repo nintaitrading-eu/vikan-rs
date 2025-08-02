@@ -19,7 +19,12 @@ pub mod config
 
     pub fn get_output_file() -> PathBuf
     {
-        get_config_dir().as_path().join(const_::JSON).to_path_buf()
+        get_config_dir().as_path().join(const_::JSON_DATA).to_path_buf()
+    }
+
+    pub fn get_config_file() -> PathBuf
+    {
+        get_config_dir().as_path().join(const_::JSON_CONFIG).to_path_buf()
     }
 
     pub fn ensure_config(model: &mut model::Model) -> Result<(), error::ApplicationError>
@@ -29,6 +34,17 @@ pub mod config
         {
             println!("Configuration directory does not exist yet, creating a default one at {:?}.", config_dir);
             fs::create_dir_all(config_dir.as_path()).map_err(error::ApplicationError::IoError)?;
+        }
+
+        let config_file: PathBuf = get_config_file();
+        if !config_file.exists()
+        {
+            let config = model::Configuration
+            {
+                theme: "default",
+                ..Default::default()
+            };
+            data::save_config(config)?;
         }
 
         let output_file: PathBuf = get_output_file();

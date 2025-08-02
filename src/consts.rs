@@ -6,7 +6,8 @@ pub mod const_
     pub const ITEM_HEIGHT: u16 = 3;
 
     // Data
-    pub const JSON: &str = "data.json";
+    pub const JSON_DATA: &str = "data.json";
+    pub const JSON_CONFIG: &str = "config.json";
 
     // Style
     pub const GREEN: u8 = 2;

@@ -4,6 +4,12 @@ pub mod model
     use crate::enums::enum_;
 
     #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+    pub struct Configuration
+    {
+        pub theme: &'static str,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Default, Clone)]
     pub struct TodoItem
     {
         pub title: String,

@@ -24,4 +24,12 @@ pub mod data
         file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
         Ok(())
     }
+
+    pub fn save_config(config: model::Configuration) -> Result<(), error::ApplicationError>
+    {
+        let json_data = serde_json::to_string_pretty(&config).unwrap();
+        let mut file = File::create(config::get_config_file()).map_err(error::ApplicationError::IoError)?;
+        file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
+        Ok(())
+    }
 }
