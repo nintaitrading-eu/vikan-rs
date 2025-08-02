@@ -7,7 +7,6 @@ mod data_handler;
 mod models;
 mod ui;
 
-use std::fs;
 use std::iter::zip;
 
 use consts::const_;
