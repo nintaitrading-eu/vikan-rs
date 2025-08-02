@@ -9,7 +9,7 @@ pub mod model
         pub title: String,
     }
 
-    #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+    #[derive(Debug, Default, Clone)]
     pub struct Model
     {
         pub col: usize,
