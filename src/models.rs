@@ -6,7 +6,7 @@ pub mod model
     #[derive(Serialize, Deserialize, Debug, Default, Clone)]
     pub struct Configuration
     {
-        pub theme: &'static str,
+        pub theme: String,
     }
 
     #[derive(Serialize, Deserialize, Debug, Default, Clone)]

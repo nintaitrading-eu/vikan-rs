@@ -11,6 +11,7 @@ use std::iter::zip;
 
 use consts::const_;
 use enums::enum_;
+use config_handler::config;
 use error_handler::error;
 use event_handler::event;
 use data_handler::data;
@@ -32,7 +33,17 @@ fn main()
         ..Default::default()
     };
 
-    model = match data::load_data(&mut model)
+    match config::ensure_config(&mut model)
+    {
+        Ok(()) => (),
+        Err(ex) =>
+        {
+            println!("Error: {}", ex);
+            std::process::exit(1);
+        }
+    }
+
+    model = match data::load(&mut model)
     {
         Ok(Some(m)) => m,
         Ok(None) => model,
@@ -43,8 +54,18 @@ fn main()
         }
     };
 
+    let config: model::Configuration = match config::load()
+    {
+        Ok(c) => c,
+        Err(ex) =>
+        {
+            println!("Error: {}", ex);
+            std::process::exit(1);
+        }
+    };
+
     model.running_state = enum_::RunningState::Running;
-    match render(model)
+    match render(model, &config)
     {
         Ok(_) => (),
         Err(ex) =>
@@ -55,14 +76,14 @@ fn main()
     };
 }
 
-fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
+fn render(mut model: model::Model, config: &model::Configuration) -> Result<(), error::ApplicationError>
 {
     tui::install_panic_hook();
     let mut terminal = tui::init_terminal().map_err(error::ApplicationError::IoError)?;
     while model.running_state != enum_::RunningState::Done
     {
         // Render the current view
-        terminal.draw(|f| view(&mut model, f)).map_err(error::ApplicationError::IoError)?;
+        terminal.draw(|f| view(&mut model, config, f)).map_err(error::ApplicationError::IoError)?;
 
         // Handle events and map to a Message
         let mut current_msg = event::handle_event(&model)?;
@@ -72,9 +93,9 @@ fn render(mut model: model::Model) -> Result<(), error::ApplicationError>
         {
             current_msg = event::update(&mut model, current_msg.unwrap());
         }
-        data::save_data(&mut model)?;
+        data::save(&mut model)?;
     }
-    data::save_data(&mut model)?;
+    data::save(&mut model)?;
 
     tui::restore_terminal().map_err(error::ApplicationError::IoError)?;
     Ok(())
@@ -89,7 +110,7 @@ fn create_paragraph(item: model::TodoItem, fgcolor: u8, _bgcolor: u8) -> Paragra
         .alignment(Alignment::Center)
 }
 
-fn view(model: &mut model::Model, frame: &mut Frame)
+fn view(model: &mut model::Model, config: &model::Configuration, frame: &mut Frame)
 {
     use Constraint::Fill;
     let horizontal = Layout::horizontal([Fill(1); const_::MAX_COLUMNS]);
@@ -103,6 +124,7 @@ fn view(model: &mut model::Model, frame: &mut Frame)
 
         let inner_area = list_component.inner(area);
 
+        // TODO: Implement themed colors from the config.
         if model.col == idx
         {
             list_component = list_component.fg(Color::Indexed(const_::LIGHT_GREEN)).bold()

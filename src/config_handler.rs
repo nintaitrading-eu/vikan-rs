@@ -7,6 +7,8 @@ pub mod config
     use directories_next::ProjectDirs;
     use std::path::{Path, PathBuf};
     use std::fs;
+    use std::fs::File;
+    use std::io::Write;
 
     fn get_config_dir() -> PathBuf
     {
@@ -41,18 +43,33 @@ pub mod config
         {
             let config = model::Configuration
             {
-                theme: "default",
+                theme: "default".to_string(),
                 ..Default::default()
             };
-            data::save_config(config)?;
+            save(config)?;
         }
 
         let output_file: PathBuf = get_output_file();
         if !output_file.exists()
         {
-            data::save_data(model)?;
+            data::save(model)?;
             println!("Output file does not exist yet, creating a default one at {:?}.", Path::new(config_dir.as_path()).join(output_file.as_path()));
         }
         Ok(())
+    }
+
+    pub fn save(config: model::Configuration) -> Result<(), error::ApplicationError>
+    {
+        let json_data = serde_json::to_string_pretty(&config).unwrap();
+        let mut file = File::create(get_config_file()).map_err(error::ApplicationError::IoError)?;
+        file.write_all(json_data.as_bytes()).map_err(error::ApplicationError::IoError)?;
+        Ok(())
+    }
+
+    pub fn load() -> Result<model::Configuration, error::ApplicationError>
+    {
+        let json_data = fs::read_to_string(get_config_file()).map_err(error::ApplicationError::IoError)?;
+        let i: model::Configuration = serde_json::from_str(&json_data).map_err(error::ApplicationError::JsonError)?;
+        Ok(i.clone())
     }
 }
