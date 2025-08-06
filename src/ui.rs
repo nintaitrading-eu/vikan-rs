@@ -1,3 +1,7 @@
+/*
+ * ui
+ *     Specific code related to the UI initialization.
+ */
 pub mod tui
 {
     use ratatui::{

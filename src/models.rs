@@ -1,3 +1,7 @@
+/*
+ * model
+ *     A collection of structs, that model the application.
+ */
 pub mod model
 {
     use serde::{Serialize, Deserialize};
@@ -13,6 +17,17 @@ pub mod model
     pub struct TodoItem
     {
         pub title: String,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+    pub struct Theme
+    {
+        pub table: u8,
+        pub table_light: u8,
+        pub issue: u8,
+        pub issue_light: u8,
+        pub selected: u8,
+        pub selected_light: u8,
     }
 
     #[derive(Debug, Default, Clone)]

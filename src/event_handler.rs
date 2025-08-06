@@ -1,3 +1,7 @@
+/*
+ * event_handler
+ *     Handle the UI interactions.
+ */
 pub mod event
 {
     use crate::error_handler::error;

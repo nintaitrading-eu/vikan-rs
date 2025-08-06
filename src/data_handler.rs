@@ -1,3 +1,7 @@
+/*
+ * data_handler
+ *     Loads and saves the data of the kanban issues created via the application.
+ */
 pub mod data 
 {
     use crate::config_handler::config;

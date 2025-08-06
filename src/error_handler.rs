@@ -1,3 +1,7 @@
+/*
+ * error_handler
+ *     Custom error handling module.
+ */
 pub mod error
 {
     use thiserror::Error;
@@ -7,7 +11,6 @@ pub mod error
     {
         #[error("Error (de)serializing json.")]
         JsonError(serde_json::Error),
-        //JsonError(#[from] serde_json::Error),
 
         #[error("Error (de)serializing json.")]
         SerdeError(serde_json::Error),
@@ -27,26 +30,6 @@ pub mod error
             ApplicationError::SerdeError(err)
         }
     }
-
-    /*impl From<serde_json::Error> for ApplicationError
-    {
-        fn from(err: serde_json::Error) -> ApplicationError
-        {
-            ApplicationError::JsonError(err)
-            /*use serde_json::error::Category;
-            match err.classify()
-            {
-                Category::Io =>
-                {
-                    ApplicationError::IoError(err.into())
-                }
-                Category::Syntax | Category::Data | Category::Eof =>
-                {
-                    ApplicationError::JsonError(err)
-                }
-            }*/
-        }
-    }*/
 
     impl From<ApplicationError> for serde_json::Error
     {

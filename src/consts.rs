@@ -1,3 +1,7 @@
+/*
+ * consts
+ *     Global vars and resource strings.
+ */
 pub mod const_
 {
     // Layout
@@ -10,14 +14,14 @@ pub mod const_
     pub const JSON_CONFIG: &str = "config.json";
 
     // Style
+    pub const THEMES_DIR: &str = "themes";
+    pub const DEFAULT_THEME_FILE: &str = "default.json";
     pub const GREEN: u8 = 2;
     pub const LIGHT_GREEN: u8 = 10;
     pub const YELLOW: u8 = 3;
     pub const LIGHT_YELLOW: u8 = 11;
     pub const WHITE: u8 = 7;
     pub const LIGHT_WHITE: u8 = 15;
-    pub const BLACK: u8 = 0;
-    pub const LIGHT_BLACK: u8 = 8;
 
     // Resource strings
     pub const RS_ADDITEM: &str = "Add Item";

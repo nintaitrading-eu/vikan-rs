@@ -1,3 +1,7 @@
+/*
+ * config_handler
+ *     Loads the config.
+ */
 pub mod config
 {
     use crate::consts::const_;
@@ -10,7 +14,7 @@ pub mod config
     use std::fs::File;
     use std::io::Write;
 
-    fn get_config_dir() -> PathBuf
+    pub fn get_config_dir() -> PathBuf
     {
         match ProjectDirs::from("com", "nintaitrading", "vikan")
         {

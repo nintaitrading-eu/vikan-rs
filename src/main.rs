@@ -1,9 +1,14 @@
+/*
+ * main
+ *     The main starting point of the application.
+ */
 mod consts;
 mod enums;
 mod config_handler;
 mod error_handler;
 mod event_handler;
 mod data_handler;
+mod theme_handler;
 mod models;
 mod ui;
 
@@ -15,6 +20,7 @@ use config_handler::config;
 use error_handler::error;
 use event_handler::event;
 use data_handler::data;
+use theme_handler::theme;
 use models::model;
 use ui::tui;
 
@@ -34,6 +40,16 @@ fn main()
     };
 
     match config::ensure_config(&mut model)
+    {
+        Ok(()) => (),
+        Err(ex) =>
+        {
+            println!("Error: {}", ex);
+            std::process::exit(1);
+        }
+    }
+
+    match theme::ensure_theme()
     {
         Ok(()) => (),
         Err(ex) =>
@@ -64,8 +80,18 @@ fn main()
         }
     };
 
+    let theme: model::Theme = match theme::load(config.clone())
+    {
+        Ok(c) => c,
+        Err(ex) =>
+        {
+            println!("Error: {}", ex);
+            std::process::exit(1);
+        }
+    };
+
     model.running_state = enum_::RunningState::Running;
-    match render(model, &config)
+    match render(model, &theme)
     {
         Ok(_) => (),
         Err(ex) =>
@@ -76,14 +102,14 @@ fn main()
     };
 }
 
-fn render(mut model: model::Model, config: &model::Configuration) -> Result<(), error::ApplicationError>
+fn render(mut model: model::Model, theme: &model::Theme) -> Result<(), error::ApplicationError>
 {
     tui::install_panic_hook();
     let mut terminal = tui::init_terminal().map_err(error::ApplicationError::IoError)?;
     while model.running_state != enum_::RunningState::Done
     {
         // Render the current view
-        terminal.draw(|f| view(&mut model, config, f)).map_err(error::ApplicationError::IoError)?;
+        terminal.draw(|f| view(&mut model, theme, f)).map_err(error::ApplicationError::IoError)?;
 
         // Handle events and map to a Message
         let mut current_msg = event::handle_event(&model)?;
@@ -101,16 +127,15 @@ fn render(mut model: model::Model, config: &model::Configuration) -> Result<(), 
     Ok(())
 }
 
-fn create_paragraph(item: model::TodoItem, fgcolor: u8, _bgcolor: u8) -> Paragraph<'static>
+fn create_paragraph(item: model::TodoItem, fgcolor: u8) -> Paragraph<'static>
 {
     Paragraph::new(format!("{}", item.title))
         .block(Block::bordered())
-        //.bg(Color::Indexed(bgcolor)) // TODO: Cleanup, after I figure out what styling option I like best.
         .fg(Color::Indexed(fgcolor))
         .alignment(Alignment::Center)
 }
 
-fn view(model: &mut model::Model, config: &model::Configuration, frame: &mut Frame)
+fn view(model: &mut model::Model, theme: &model::Theme, frame: &mut Frame)
 {
     use Constraint::Fill;
     let horizontal = Layout::horizontal([Fill(1); const_::MAX_COLUMNS]);
@@ -124,14 +149,13 @@ fn view(model: &mut model::Model, config: &model::Configuration, frame: &mut Fra
 
         let inner_area = list_component.inner(area);
 
-        // TODO: Implement themed colors from the config.
         if model.col == idx
         {
-            list_component = list_component.fg(Color::Indexed(const_::LIGHT_GREEN)).bold()
+            list_component = list_component.fg(Color::Indexed(theme.table_light)).bold()
         }
         else
         {
-            list_component = list_component.fg(Color::Indexed(const_::GREEN));
+            list_component = list_component.fg(Color::Indexed(theme.table));
         }
 
         frame.render_widget(list_component, area);
@@ -153,23 +177,16 @@ fn view(model: &mut model::Model, config: &model::Configuration, frame: &mut Fra
             {
                 if selectedrow == itemidx
                 {
-                    create_paragraph(item, const_::LIGHT_WHITE, const_::LIGHT_YELLOW).bold()
+                    create_paragraph(item, theme.selected_light).bold()
                 }
                 else
                 {
-                    create_paragraph(item, const_::LIGHT_YELLOW, const_::LIGHT_BLACK).bold()
+                    create_paragraph(item, theme.issue_light).bold()
                 }
             }
             else
             {
-                if selectedrow == itemidx
-                {
-                    create_paragraph(item, const_::YELLOW, const_::BLACK)
-                }
-                else
-                {
-                    create_paragraph(item, const_::YELLOW, const_::BLACK)
-                }
+                create_paragraph(item, theme.issue)
             };
 
             frame.render_widget(item_component, *item_area);

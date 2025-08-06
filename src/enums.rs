@@ -1,3 +1,7 @@
+/*
+ * enums
+ *     Enums.
+ */
 pub mod enum_
 {
     use serde::{Serialize, Deserialize};
