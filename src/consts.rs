@@ -4,6 +4,9 @@
  */
 pub mod const_
 {
+    // General
+    pub const EXT: &str = "json";
+
     // Layout
     pub const MAX_COLUMNS: usize = 3;
     pub const COLUMNS: [&str; MAX_COLUMNS] = ["TODO", "IN PROGRESS", "DONE"];

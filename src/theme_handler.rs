@@ -65,9 +65,10 @@ pub mod theme
 
     pub fn load(config: model::Configuration) -> Result<model::Theme, error::ApplicationError>
     {
-        let mut theme_file: PathBuf = get_themes_dir().as_path().join(config.theme);
+        let mut theme_file: PathBuf = get_themes_dir().as_path().join([config.theme, const_::EXT.to_string()].join("."));
         if !theme_file.exists()
         {
+            println!("Warning: Theme {:?} not found. Falling back on default theme.", theme_file.as_path());
             theme_file = get_default_theme_file();
         }
         let json_data = fs::read_to_string(theme_file).map_err(error::ApplicationError::IoError)?;
