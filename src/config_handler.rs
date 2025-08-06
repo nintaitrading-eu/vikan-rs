@@ -53,7 +53,7 @@ pub mod config
         if !output_file.exists()
         {
             data::save(model)?;
-            println!("Output file does not exist yet, creating a default one at {:?}.", Path::new(config_dir.as_path()).join(output_file.as_path()));
+            println!("Output file does not exist yet, creating a default one at {:?}.", Path::new(output_file.as_path()));
         }
         Ok(())
     }
