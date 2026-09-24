@@ -30,7 +30,12 @@ pub mod event
         Edit,
         Delete,
         Input(char),
+        CursorLeft,
+        CursorRight,
+        CursorHome,
+        CursorEnd,
         Backspace,
+        DeleteForward,
         Submit,
         Cancel,
         Help,
@@ -65,7 +70,12 @@ pub mod event
         match key.code
         {
             KeyCode::Char(c) => Some(Message::Input(c)),
+            KeyCode::Left => Some(Message::CursorLeft),
+            KeyCode::Right => Some(Message::CursorRight),
+            KeyCode::Home => Some(Message::CursorHome),
+            KeyCode::End => Some(Message::CursorEnd),
             KeyCode::Backspace => Some(Message::Backspace),
+            KeyCode::Delete => Some(Message::DeleteForward),
             KeyCode::Enter => Some(Message::Submit),
             KeyCode::Esc => Some(Message::Cancel),
             _ => None,
@@ -167,15 +177,22 @@ pub mod event
                 model.show_popup = true;
                 model.is_inputting = true;
                 model.input.clear();
+                model.input_cursor = 0;
                 model.popup_type = enum_::PopupType::Add;
 
                 None
             }
             Message::Edit =>
             {
+                if model.items[model.col].is_empty()
+                {
+                    return None;
+                }
+
                 model.show_popup = true;
                 model.is_inputting = true;
                 model.input = model.items[model.col][model.row].title.clone();
+                model.input_cursor = model.input.len();
                 model.popup_type = enum_::PopupType::Edit;
 
                 None
@@ -266,12 +283,55 @@ pub mod event
             }
             Message::Input(c) =>
             {
-                model.input.push(c);
+                model.input.insert(model.input_cursor, c);
+                model.input_cursor += c.len_utf8();
+                None
+            }
+            Message::CursorLeft =>
+            {
+                if model.input_cursor > 0
+                {
+                    model.input_cursor = model.input[..model.input_cursor]
+                        .char_indices().last().map_or(0, |(index, _)| index);
+                }
+                None
+            }
+            Message::CursorRight =>
+            {
+                if model.input_cursor < model.input.len()
+                {
+                    model.input_cursor += model.input[model.input_cursor..]
+                        .chars().next().unwrap().len_utf8();
+                }
+                None
+            }
+            Message::CursorHome =>
+            {
+                model.input_cursor = 0;
+                None
+            }
+            Message::CursorEnd =>
+            {
+                model.input_cursor = model.input.len();
                 None
             }
             Message::Backspace =>
             {
-                model.input.pop();
+                if model.input_cursor > 0
+                {
+                    let previous = model.input[..model.input_cursor]
+                        .char_indices().last().map_or(0, |(index, _)| index);
+                    model.input.drain(previous..model.input_cursor);
+                    model.input_cursor = previous;
+                }
+                None
+            }
+            Message::DeleteForward =>
+            {
+                if let Some(c) = model.input[model.input_cursor..].chars().next()
+                {
+                    model.input.drain(model.input_cursor..model.input_cursor + c.len_utf8());
+                }
                 None
             }
             Message::Submit =>
@@ -295,6 +355,7 @@ pub mod event
 
                 model.popup_type = enum_::PopupType::None;
                 model.input.clear();
+                model.input_cursor = 0;
 
                 None
             }
@@ -303,6 +364,7 @@ pub mod event
                 model.show_popup = false;
                 model.is_inputting = false;
                 model.input.clear();
+                model.input_cursor = 0;
                 None
             }
             Message::Help =>
@@ -321,6 +383,57 @@ pub mod event
                 model.popup_type = enum_::PopupType::None;
                 None
             }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests
+    {
+        use super::*;
+
+        #[test]
+        fn edit_inserts_and_deletes_at_cursor()
+        {
+            let mut model = model::Model {
+                items: vec![vec![model::TodoItem { title: "cat".into() }], vec![], vec![]],
+                ..Default::default()
+            };
+
+            update(&mut model, Message::Edit);
+            assert_eq!(model.input_cursor, 3);
+            update(&mut model, Message::CursorLeft);
+            update(&mut model, Message::Input('r'));
+            assert_eq!(model.input, "cart");
+            update(&mut model, Message::Backspace);
+            assert_eq!(model.input, "cat");
+            update(&mut model, Message::DeleteForward);
+            assert_eq!(model.input, "ca");
+            update(&mut model, Message::CursorHome);
+            update(&mut model, Message::DeleteForward);
+            assert_eq!(model.input, "a");
+            update(&mut model, Message::Submit);
+            assert_eq!(model.items[0][0].title, "a");
+        }
+
+        #[test]
+        fn cursor_moves_over_multibyte_characters()
+        {
+            let mut model = model::Model {
+                items: vec![vec![model::TodoItem { title: "aé日".into() }], vec![], vec![]],
+                ..Default::default()
+            };
+
+            update(&mut model, Message::Edit);
+            update(&mut model, Message::CursorLeft);
+            update(&mut model, Message::CursorLeft);
+            assert_eq!(model.input_cursor, 1);
+            update(&mut model, Message::Backspace);
+            assert_eq!(model.input, "é日");
+            update(&mut model, Message::CursorRight);
+            update(&mut model, Message::Input('!'));
+            assert_eq!(model.input, "é!日");
+            update(&mut model, Message::Cancel);
+            assert_eq!(model.items[0][0].title, "aé日");
         }
     }
 }

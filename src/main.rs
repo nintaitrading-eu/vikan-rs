@@ -27,6 +27,7 @@ use ui::tui;
 use ratatui::{
     layout::{Alignment, Constraint, Flex, Layout, Rect},
     style::{Stylize, Color},
+    text::Line,
     widgets::{Block, Clear, Paragraph},
     Frame,
 };
@@ -208,12 +209,27 @@ fn view(model: &mut model::Model, theme: &model::Theme, frame: &mut Frame)
             _ => 3,
         };
 
-        let input = Paragraph::new(model.input.as_str())
-            .centered()
-            .block(Block::bordered().title(title));
         let area = popup_area(frame.area(), height, 60);
+        let cursor_width = Line::raw(&model.input[..model.input_cursor]).width();
+        let inner_width = usize::from(area.width.saturating_sub(2));
+        let scroll = if model.is_inputting && inner_width > 0
+        {
+            cursor_width.saturating_sub(inner_width - 1).min(usize::from(u16::MAX)) as u16
+        }
+        else
+        {
+            0
+        };
+        let input = Paragraph::new(model.input.as_str())
+            .scroll((0, scroll))
+            .block(Block::bordered().title(title));
         frame.render_widget(Clear, area);
         frame.render_widget(input, area);
+        if model.is_inputting && inner_width > 0
+        {
+            let cursor_x = area.x + 1 + (cursor_width - usize::from(scroll)) as u16;
+            frame.set_cursor_position((cursor_x, area.y + 1));
+        }
     }
 }
 

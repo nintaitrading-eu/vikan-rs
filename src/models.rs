@@ -40,6 +40,7 @@ pub mod model
         pub show_popup: bool,
         pub is_inputting: bool,
         pub input: String,
+        pub input_cursor: usize,
         pub popup_type: enum_::PopupType,
     }
 }
